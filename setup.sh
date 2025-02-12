@@ -7,27 +7,27 @@ sudo apt update && sudo apt upgrade -y
 sudo apt install xserver-xorg xinit openbox chromium-browser unclutter --no-install-recommends x11-xserver-utils xdotool xterm hostapd dnsmasq -y
 
 # 3. Autostart-Konfiguration für Openbox
-mkdir -p ~/.config/openbox
-cat <<EOF | tee ~/.config/openbox/autostart
-~/start_chromium.sh &
+mkdir -p $HOME/.config/openbox
+cat <<EOF | tee $HOME/.config/openbox/autostart
+$HOME/start_chromium.sh &
 unclutter -idle 0 &
 EOF
 
 # 4. Chromium-Startskript erstellen
-cat <<EOF | tee ~/start_chromium.sh
+cat <<EOF | tee $HOME/start_chromium.sh
 #!/bin/bash
 export DISPLAY=:0
 chromium-browser --noerrdialogs --disable-infobars --kiosk http://localhost:3000 --disable-features=RendererCodeIntegrity --disable-background-timer-throttling --disable-renderer-backgrounding
 EOF
-chmod +x ~/start_chromium.sh
+chmod +x $HOME/start_chromium.sh
 
 # 5. Openbox beim Start laden
-cat <<EOF | tee ~/.xinitrc
+cat <<EOF | tee $HOME/.xinitrc
 exec openbox-session
 EOF
 
 # 6. Automatischen GUI-Start sicherstellen
-cat <<EOF | tee ~/.bash_profile
+cat <<EOF | tee $HOME/.bash_profile
 if [ -z \$DISPLAY ] && [ \$(tty) = /dev/tty1 ]; then
     startx
 fi
