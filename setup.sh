@@ -1,27 +1,40 @@
 #!/bin/bash
 
-# System-Updates
+# 1. System-Updates
 sudo apt update && sudo apt upgrade -y
 
-# Benötigte Pakete installieren
-sudo apt install lxqt chromium-browser openbox unclutter --no-install-recommends xserver-xorg x11-xserver-utils xdotool xterm hostapd dnsmasq -y
+# 2. Notwendige Pakete installieren
+sudo apt install xserver-xorg xinit openbox chromium-browser unclutter --no-install-recommends x11-xserver-utils xdotool xterm hostapd dnsmasq -y
 
-# Autostart konfigurieren
-sudo mkdir -p ~/.config/openbox
-cat <<EOF | sudo tee ~/.config/openbox/autostart
-chromium-browser --noerrdialogs --disable-infobars --kiosk http://localhost:3000 --disable-background-timer-throttling --disable-renderer-backgrounding &
+# 3. Autostart-Konfiguration für Openbox
+mkdir -p ~/.config/openbox
+cat <<EOF | tee ~/.config/openbox/autostart
+~/start_chromium.sh &
 unclutter -idle 0 &
 EOF
 
-# Bash-Profil anpassen
-cat <<EOF | sudo tee ~/.bash_profile
+# 4. Chromium-Startskript erstellen
+cat <<EOF | tee ~/start_chromium.sh
+#!/bin/bash
+export DISPLAY=:0
+chromium-browser --noerrdialogs --disable-infobars --kiosk http://localhost:3000 --disable-features=RendererCodeIntegrity --disable-background-timer-throttling --disable-renderer-backgrounding
+EOF
+chmod +x ~/start_chromium.sh
+
+# 5. Openbox beim Start laden
+cat <<EOF | tee ~/.xinitrc
+exec openbox-session
+EOF
+
+# 6. Automatischen GUI-Start sicherstellen
+cat <<EOF | tee ~/.bash_profile
 if [ -z \$DISPLAY ] && [ \$(tty) = /dev/tty1 ]; then
     startx
 fi
 EOF
 
-# Hostapd konfigurieren
-sudo tee /etc/hostapd/hostapd.conf <<EOF
+# 7. Hotspot-Konfiguration
+cat <<EOF | sudo tee /etc/hostapd/hostapd.conf
 interface=wlan0
 ssid=Menu-Software.de
 hw_mode=g
@@ -35,40 +48,62 @@ auth_algs=1
 ignore_broadcast_ssid=0
 EOF
 
-# Netzwerk und DHCP konfigurieren
-sudo tee /etc/dhcpcd.conf <<EOF
+# 8. Statische IP-Adresse für wlan0 setzen
+cat <<EOF | sudo tee /etc/dhcpcd.conf
 interface wlan0
 static ip_address=1.1.1.1/24
 nohook wpa_supplicant
 EOF
 
-sudo tee /etc/dnsmasq.conf <<EOF
+# 9. DHCP-Server konfigurieren
+cat <<EOF | sudo tee /etc/dnsmasq.conf
 interface=wlan0
 dhcp-range=1.1.1.2,1.1.1.20,255.255.255.0,24h
 EOF
 
-# Dienste aktivieren
+# 10. Hotspot-Dienste aktivieren
 sudo systemctl unmask hostapd
 sudo systemctl enable hostapd dnsmasq
 sudo systemctl restart hostapd dnsmasq
 
-# Standby deaktivieren
+# 11. Standby und Bildschirmschoner deaktivieren
 sudo mkdir -p /etc/X11/xorg.conf.d
-sudo tee /etc/X11/xorg.conf.d/10-monitor.conf <<EOF
+cat <<EOF | sudo tee /etc/X11/xorg.conf.d/10-monitor.conf
 Section "ServerFlags"
     Option "BlankTime" "0"
     Option "StandbyTime" "0"
     Option "SuspendTime" "0"
     Option "OffTime" "0"
 EndSection
+
+Section "Monitor"
+    Identifier "Monitor0"
+    Option "DPMS" "false"
+EndSection
 EOF
 
-# WLAN-Sperre entfernen
-sudo tee /etc/rc.local <<EOF
+# 12. WLAN-Sperre beim Boot entfernen
+cat <<EOF | sudo tee /etc/rc.local
 #!/bin/sh -e
 rfkill unblock wlan
 exit 0
 EOF
 sudo chmod +x /etc/rc.local
 
+# 13. Hostapd-Dienstverzögerung für stabilen Start
+cat <<EOF | sudo tee /etc/systemd/system/hostapd-restart.service
+[Unit]
+Description=Restart hostapd after network initialization
+After=network.target
+
+[Service]
+ExecStart=/bin/bash -c "sleep 10 && systemctl restart hostapd"
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+sudo systemctl enable hostapd-restart.service
+
+# 14. Abschluss
 echo "Setup abgeschlossen. Bitte Raspberry Pi neu starten."
