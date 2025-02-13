@@ -8,7 +8,6 @@ chmod +x setup.sh
 sudo ./setup.sh
 #
 
-#
 #wenn bildschirm problem 
 
 sudo nano ~/.bash_profile"
@@ -19,6 +18,7 @@ fi
 
 #
 #wenn bildshcirm problem weiterhin besteht
+
 mkdir -p /home/q-tech.dev/.local/share/xorg
 
 sudo chown -R q-tech.dev:q-tech.dev /home/q-tech.dev/.local/share/xorg
