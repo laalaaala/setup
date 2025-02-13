@@ -33,7 +33,6 @@ sync
 # 6. Chromium-Startskript erstellen
 cat <<EOF | tee "$USER_HOME/start_chromium.sh"
 #!/bin/bash
-sleep 5
 export DISPLAY=:0
 chromium-browser --user-data-dir="$USER_HOME/.config/chromium-profile" --noerrdialogs --disable-infobars --kiosk http://localhost:3000 --disable-features=RendererCodeIntegrity --disable-background-timer-throttling --disable-renderer-backgrounding || sudo reboot
 EOF
