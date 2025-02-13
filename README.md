@@ -6,6 +6,11 @@ git clone https://github.com/laalaaala/setup.git
 chmod +x setup.sh
 
 sudo ./setup.sh
+#
+
+mkdir -p /home/q-tech.dev/.local/share/xorg
+sudo chown -R q-tech.dev:q-tech.dev /home/q-tech.dev/.local/share/xorg
+sudo chmod -R 755 /home/q-tech.dev/.local/share/xorg
 
 #
 #Überprüfung
