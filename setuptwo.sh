@@ -21,6 +21,24 @@ mkdir -p /home/q-tech.dev/.local/share/xorg
 sudo chown -R q-tech.dev:q-tech.dev /home/q-tech.dev/.local/share/xorg
 sudo chmod -R 755 /home/q-tech.dev/.local/share/xorg
 
+# 5. Docker installieren
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+
+sudo groupadd docker
+sudo usermod -aG docker $USER
+newgrp docker
+
+sudo chmod 666 /var/run/docker.sock
+
+sudo apt install -y docker-compose-plugin
+docker compose version
+
+sudo systemctl enable docker.service
+sudo systemctl enable containerd.service
+sudo systemctl enable docker
+sudo systemctl start docker
+
 # 5. Autostart-Konfiguration für Openbox
 mkdir -p "$USER_HOME/.config/openbox"
 cat <<EOF | tee "$USER_HOME/.config/openbox/autostart"
