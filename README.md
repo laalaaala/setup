@@ -7,7 +7,7 @@ chmod +x setup.sh
 
 sudo ./setup.sh
 
-
+#
 #Überprüfung
 ls -l /home/pi/.config/openbox/autostart
 
