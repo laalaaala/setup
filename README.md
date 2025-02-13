@@ -16,6 +16,7 @@ sudo chmod -R 755 /home/q-tech.dev/.local/share/xorg
 
 #
 sudo nano ~/.bash_profile"
+
 if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
     startx
 fi
