@@ -9,6 +9,10 @@ sudo apt update && sudo apt upgrade -y
 # 2. Notwendige Pakete installieren
 sudo apt install xserver-xorg xinit openbox chromium-browser unclutter --no-install-recommends x11-xserver-utils xdotool xterm hostapd dnsmasq -y
 
+mkdir -p ~/.config/chromium
+mkdir -p ~/.cache/chromium
+mkdir -p ~/.local/share/chromium
+
 # 3. Autostart-Konfiguration für Openbox
 mkdir -p "$USER_HOME/.config/openbox"
 cat <<EOF | tee "$USER_HOME/.config/openbox/autostart"
@@ -20,8 +24,9 @@ sync
 # 4. Chromium-Startskript erstellen
 cat <<EOF | tee "$USER_HOME/start_chromium.sh"
 #!/bin/bash
+sleep 5
 export DISPLAY=:0
-chromium-browser --noerrdialogs --disable-infobars --kiosk http://localhost:3000 --disable-features=RendererCodeIntegrity --disable-background-timer-throttling --disable-renderer-backgrounding
+chromium-browser --user-data-dir=/home/q-tech.dev/.config/chromium-profile --noerrdialogs --disable-infobars --kiosk http://localhost:3000 --disable-features=RendererCodeIntegrity --disable-background-timer-throttling --disable-renderer-backgrounding
 EOF
 chmod +x "$USER_HOME/start_chromium.sh"
 sync
