@@ -44,6 +44,7 @@ sync
 sudo mkdir -p /etc/hostapd
 cat <<EOF | sudo tee /etc/hostapd/hostapd.conf
 interface=wlan0
+driver=nl80211
 ssid=Menu-Software.de
 hw_mode=g
 channel=7
