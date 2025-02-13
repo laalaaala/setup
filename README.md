@@ -9,6 +9,7 @@ sudo ./setup.sh
 
 #
 #Überprüfung
+
 ls -l /home/pi/.config/openbox/autostart
 
 ls -l /home/pi/start_chromium.sh
