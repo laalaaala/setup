@@ -22,6 +22,11 @@ if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
 fi
 
 #
+#Hotspot porblem beheben
+sudo ifconfig wlan0 1.1.1.1 netmask 255.255.255.0 up
+
+
+#
 #Überprüfung
 
 ls -l /home/pi/.config/openbox/autostart
