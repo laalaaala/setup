@@ -113,6 +113,7 @@ sync
 cat <<EOF | sudo tee /etc/rc.local
 #!/bin/sh -e
 rfkill unblock wlan
+sudo ifconfig wlan0 1.1.1.1 netmask 255.255.255.0 up
 exit 0
 EOF
 sudo chmod +x /etc/rc.local
