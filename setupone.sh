@@ -41,9 +41,9 @@ exec openbox-session
 EOF
 sync
 
-# 7. Automatischen GUI-Start sicherstellen
-cat <<EOF > "$USER_HOME/.bash_profile"
-if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
+# 6. Automatischen GUI-Start sicherstellen
+cat <<EOF | tee "$USER_HOME/.bash_profile"
+if [ -z \$DISPLAY ] && [ \$(tty) = /dev/tty1 ]; then
     startx
 fi
 EOF
