@@ -8,13 +8,13 @@ sudo apt install xserver-xorg xinit openbox chromium-browser unclutter --no-inst
 
 # 3. Autostart-Konfiguration für Openbox
 mkdir -p $HOME/.config/openbox
-cat <<EOF > sudo tee $HOME/.config/openbox/autostart
+cat <<EOF | tee $HOME/.config/openbox/autostart > /dev/null
 $HOME/start_chromium.sh &
 unclutter -idle 0 &
 EOF
 
 # 4. Chromium-Startskript erstellen
-cat <<EOF > sudo tee $HOME/start_chromium.sh
+cat <<EOF | tee $HOME/start_chromium.sh > /dev/null
 #!/bin/bash
 export DISPLAY=:0
 chromium-browser --noerrdialogs --disable-infobars --kiosk http://localhost:3000 --disable-features=RendererCodeIntegrity --disable-background-timer-throttling --disable-renderer-backgrounding
@@ -22,19 +22,19 @@ EOF
 chmod +x $HOME/start_chromium.sh
 
 # 5. Openbox beim Start laden
-cat <<EOF > sudo tee $HOME/.xinitrc
+cat <<EOF | tee $HOME/.xinitrc > /dev/null
 exec openbox-session
 EOF
 
 # 6. Automatischen GUI-Start sicherstellen
-cat <<EOF > sudo tee $HOME/.bash_profile
+cat <<EOF | tee $HOME/.bash_profile > /dev/null
 if [ -z \$DISPLAY ] && [ \$(tty) = /dev/tty1 ]; then
     startx
 fi
 EOF
 
 # 7. Hotspot-Konfiguration
-cat <<EOF > sudo tee /etc/hostapd/hostapd.conf
+cat <<EOF | sudo tee /etc/hostapd/hostapd.conf > /dev/null
 interface=wlan0
 ssid=Menu-Software.de
 hw_mode=g
@@ -49,14 +49,14 @@ ignore_broadcast_ssid=0
 EOF
 
 # 8. Statische IP-Adresse für wlan0 setzen
-cat <<EOF > sudo tee /etc/dhcpcd.conf
+cat <<EOF | sudo tee /etc/dhcpcd.conf > /dev/null
 interface wlan0
 static ip_address=1.1.1.1/24
 nohook wpa_supplicant
 EOF
 
 # 9. DHCP-Server konfigurieren
-cat <<EOF > sudo tee /etc/dnsmasq.conf
+cat <<EOF | sudo tee /etc/dnsmasq.conf > /dev/null
 interface=wlan0
 dhcp-range=1.1.1.2,1.1.1.20,255.255.255.0,24h
 EOF
@@ -68,7 +68,7 @@ sudo systemctl restart hostapd dnsmasq
 
 # 11. Standby und Bildschirmschoner deaktivieren
 sudo mkdir -p /etc/X11/xorg.conf.d
-cat <<EOF > sudo tee /etc/X11/xorg.conf.d/10-monitor.conf
+cat <<EOF | sudo tee /etc/X11/xorg.conf.d/10-monitor.conf > /dev/null
 Section "ServerFlags"
     Option "BlankTime" "0"
     Option "StandbyTime" "0"
@@ -83,7 +83,7 @@ EndSection
 EOF
 
 # 12. WLAN-Sperre beim Boot entfernen
-cat <<EOF > sudo tee /etc/rc.local
+cat <<EOF | sudo tee /etc/rc.local > /dev/null
 #!/bin/sh -e
 rfkill unblock wlan
 exit 0
@@ -91,7 +91,7 @@ EOF
 sudo chmod +x /etc/rc.local
 
 # 13. Hostapd-Dienstverzögerung für stabilen Start
-cat <<EOF > sudo tee /etc/systemd/system/hostapd-restart.service
+cat <<EOF | sudo tee /etc/systemd/system/hostapd-restart.service > /dev/null
 [Unit]
 Description=Restart hostapd after network initialization
 After=network.target
