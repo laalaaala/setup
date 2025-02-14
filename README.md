@@ -32,6 +32,7 @@ sudo ifconfig wlan0 1.1.1.1 netmask 255.255.255.0 up
 #
 
 #Splashscreen einrcihten
+
 sudo nano /boot/config.txt
 
 disable_splash=1
