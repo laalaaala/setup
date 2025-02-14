@@ -29,6 +29,20 @@ sudo chmod -R 755 /home/q-tech.dev/.local/share/xorg
 #Hotspot porblem beheben
 
 sudo ifconfig wlan0 1.1.1.1 netmask 255.255.255.0 up
+#
+
+#Splashscreen einrcihten
+sudo nano /boot/config.txt
+
+disable_splash=1
+
+avoid_warnings=1
+
+sudo nano /boot/cmdline.txt
+
+console=tty3 quiet splash plymouth.ignore-serial-consoles loglevel=0 vt.global_cursor_default=0
+
+sudo systemctl enable splashscreen.service
 
 
 #
