@@ -47,7 +47,7 @@ sync
 
 # 8. Automatischen GUI-Start sicherstellen
 cat <<EOF > "$USER_HOME/.bash_profile"
-if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
+if [ -z "\$DISPLAY" ] && [ "\$(tty)" = "/dev/tty1" ]; then
     exec startx
 fi
 EOF
