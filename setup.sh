@@ -40,12 +40,16 @@ EOF
 chmod +x "$USER_HOME/start_chromium.sh"
 sync
 
-# 7. Openbox beim Start laden (Rotation direkt beim X-Start hinzufügen)
+# 7. Openbox beim Start laden (Rotation und Splash-Screen-Beenden hinzufügen)
 cat <<EOF | tee "$USER_HOME/.xinitrc"
+#!/bin/bash
 xrandr --output \$(xrandr --current | grep ' connected' | awk '{print \$1}') --rotate right
-exec openbox-session
+exec openbox-session & # Starte Openbox im Hintergrund
+sleep 1 # Kurze Verzögerung, um sicherzustellen, dass Openbox läuft
+sudo systemctl stop splashscreen.service # Beende den Splash-Screen, wenn Openbox gestartet ist
 EOF
 sync
+chmod +x "$USER_HOME/.xinitrc"
 
 # 8. Automatischen GUI-Start sicherstellen
 cat <<EOF > "$USER_HOME/.bash_profile"
@@ -146,7 +150,7 @@ cat <<EOF | sudo tee /etc/systemd/system/splashscreen.service
 Description=Custom Boot Splash Screen with Persistent Rotation
 DefaultDependencies=no
 After=local-fs.target
-Before=plymouth-quit.service
+Before=plymouth-quit.service getty.target
 
 [Service]
 ExecStart=/bin/bash -c "/usr/bin/fbi -T 1 -noverbose -a /home/q-tech.dev/setup/qtoneos.png & sleep 1 && xrandr --output \$(xrandr --current | grep ' connected' | awk '{print \$1}') --rotate right"
@@ -159,16 +163,8 @@ WantedBy=sysinit.target
 EOF
 sudo systemctl enable splashscreen.service
 
-# 15.1.5 Skript zum Beenden des Splash-Screens, wenn Chromium startet (Rotation bleibt)
-cat <<EOF | sudo tee /usr/local/bin/stop_splash.sh
-#!/bin/bash
-sleep 5  # Warte 5 Sekunden, damit Chromium sicher gestartet ist
-sudo systemctl stop splashscreen.service
-EOF
-sudo chmod +x /usr/local/bin/stop_splash.sh
-
-# 15.1.6 Autostart für Splash-Screen-Stopp
-echo "/usr/local/bin/stop_splash.sh &" | sudo tee -a "$USER_HOME/.bash_profile"
+# 15.1.5 Skript zum Beenden des Splash-Screens entfernt, da jetzt in .xinitrc
+# Das vorherige stop_splash.sh wird nicht mehr benötigt
 
 sync
 
