@@ -6,8 +6,8 @@ USER_HOME="/home/q-tech.dev"
 # 1. System-Updates
 sudo apt update && sudo apt upgrade -y
 
-# 2. Notwendige Pakete installieren
-sudo apt install xserver-xorg xinit openbox chromium-browser unclutter --no-install-recommends x11-xserver-utils xdotool xterm hostapd dnsmasq -y
+# 2. Notwendige Pakete installieren (xrandr hinzugefügt für Rotation)
+sudo apt install xserver-xorg xinit openbox chromium-browser unclutter x11-xserver-utils xdotool xterm hostapd dnsmasq fbi xrandr -y
 
 # 3. Erstelle notwendige Chromium-Verzeichnisse
 mkdir -p "$USER_HOME/.config/chromium"
@@ -135,6 +135,41 @@ EOF
 sudo systemctl enable hostapd-restart.service
 sync
 
+# **15.1. PNG-Splash-Screen mit Rotation einrichten**
+echo "Richte Splash-Screen mit Rotation ein..."
+
+# 15.1.4 Service für den Splash-Screen mit Rotation anlegen
+cat <<EOF | sudo tee /etc/systemd/system/splashscreen.service
+[Unit]
+Description=Custom Boot Splash Screen with Rotation
+DefaultDependencies=no
+After=local-fs.target
+Before=plymouth-quit.service
+
+[Service]
+ExecStart=/bin/bash -c "/usr/bin/fbi -T 1 -noverbose -a /home/q-tech.dev/setup/qtoneos.png & sleep 1 && xrandr --output $(xrandr --current | grep ' connected' | awk '{print $1}') --rotate right && sleep 1 && xrandr --output $(xrandr --current | grep ' connected' | awk '{print $1}') --rotate normal"
+StandardInput=tty
+StandardOutput=tty
+RemainAfterExit=yes
+
+[Install]
+WantedBy=sysinit.target
+EOF
+sudo systemctl enable splashscreen.service
+
+# 15.1.5 Skript zum Beenden des Splash-Screens, wenn Chromium startet
+cat <<EOF | sudo tee /usr/local/bin/stop_splash.sh
+#!/bin/bash
+sleep 5  # Warte 5 Sekunden, damit Chromium sicher gestartet ist
+sudo systemctl stop splashscreen.service
+EOF
+sudo chmod +x /usr/local/bin/stop_splash.sh
+
+# 15.1.6 Autostart für Splash-Screen-Stopp
+echo "/usr/local/bin/stop_splash.sh &" | sudo tee -a "$USER_HOME/.bash_profile"
+
+sync
+
 # 16. Docker installieren
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
@@ -153,5 +188,5 @@ sudo systemctl enable containerd.service
 sudo systemctl enable docker
 sudo systemctl start docker
 
-# 16. Abschluss
+# 17. Abschluss
 echo "Setup abgeschlossen. Bitte Raspberry Pi neu starten."
