@@ -39,6 +39,10 @@ disable_splash=1
 
 avoid_warnings=1
 
+display_rotate=1
+
+#dtoverlay=vc4-kms-v3d
+
 sudo nano /boot/firmware/cmdline.txt
 
 console=tty3 quiet splash plymouth.ignore-serial-consoles loglevel=0 vt.global_cursor_default=0
