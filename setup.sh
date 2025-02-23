@@ -6,8 +6,8 @@ USER_HOME="/home/q-tech.dev"
 # 1. System-Updates
 sudo apt update && sudo apt upgrade -y
 
-# 2. Notwendige Pakete installieren (xrandr für Rotation hinzugefügt)
-sudo apt install xserver-xorg xinit openbox chromium-browser unclutter --no-install-recommends x11-xserver-utils xdotool xterm hostapd dnsmasq fbi xrandr -y
+# 2. Notwendige Pakete installieren
+sudo apt install xserver-xorg xinit openbox chromium-browser unclutter --no-install-recommends x11-xserver-utils xdotool xterm hostapd dnsmasq fbi -y
 
 # 3. Erstelle notwendige Chromium-Verzeichnisse
 mkdir -p "$USER_HOME/.config/chromium"
@@ -30,26 +30,20 @@ unclutter -idle 0 &
 EOF
 sync
 
-# 6. Chromium-Startskript erstellen (mit dauerhafter Rotation)
+# 6. Chromium-Startskript erstellen
 cat <<EOF | tee "$USER_HOME/start_chromium.sh"
 #!/bin/bash
 export DISPLAY=:0
-xrandr --output \$(xrandr --current | grep ' connected' | awk '{print \$1}') --rotate right
 chromium-browser --user-data-dir="$USER_HOME/.config/chromium-profile" --noerrdialogs --disable-infobars --kiosk http://localhost:3000 --disable-features=RendererCodeIntegrity --disable-background-timer-throttling --disable-renderer-backgrounding || sudo reboot
 EOF
 chmod +x "$USER_HOME/start_chromium.sh"
 sync
 
-# 7. Openbox beim Start laden (Rotation und Splash-Screen-Beenden hinzufügen)
+# 7. Openbox beim Start laden
 cat <<EOF | tee "$USER_HOME/.xinitrc"
-#!/bin/bash
-xrandr --output \$(xrandr --current | grep ' connected' | awk '{print \$1}') --rotate right
-exec openbox-session & # Starte Openbox im Hintergrund
-sleep 1 # Kurze Verzögerung, um sicherzustellen, dass Openbox läuft
-sudo systemctl stop splashscreen.service # Beende den Splash-Screen, wenn Openbox gestartet ist
+exec openbox-session
 EOF
 sync
-chmod +x "$USER_HOME/.xinitrc"
 
 # 8. Automatischen GUI-Start sicherstellen
 cat <<EOF > "$USER_HOME/.bash_profile"
@@ -141,19 +135,19 @@ EOF
 sudo systemctl enable hostapd-restart.service
 sync
 
-# **15.1. PNG-Splash-Screen einrichten (Rotation beim Splash-Screen starten)**
-echo "Richte Splash-Screen mit dauerhafter Rotation ein..."
+# **15.1. PNG-Splash-Screen einrichten**
+echo "Richte Splash-Screen ein..."
 
-# 15.1.4 Service für den Splash-Screen anlegen (mit Rotation)
+# 15.1.4 Service für den Splash-Screen anlegen
 cat <<EOF | sudo tee /etc/systemd/system/splashscreen.service
 [Unit]
-Description=Custom Boot Splash Screen with Persistent Rotation
+Description=Custom Boot Splash Screen
 DefaultDependencies=no
 After=local-fs.target
-Before=plymouth-quit.service getty.target
+Before=plymouth-quit.service
 
 [Service]
-ExecStart=/bin/bash -c "/usr/bin/fbi -T 1 -noverbose -a /home/q-tech.dev/setup/qtoneos.png & sleep 1 && xrandr --output \$(xrandr --current | grep ' connected' | awk '{print \$1}') --rotate right"
+ExecStart=/usr/bin/fbi -T 1 -noverbose -a /home/q-tech.dev/setup/qtoneos.png
 StandardInput=tty
 StandardOutput=tty
 RemainAfterExit=yes
@@ -163,28 +157,58 @@ WantedBy=sysinit.target
 EOF
 sudo systemctl enable splashscreen.service
 
-# 15.1.5 Skript zum Beenden des Splash-Screens entfernt, da jetzt in .xinitrc
-# Das vorherige stop_splash.sh wird nicht mehr benötigt
+# 15.1.5 Skript zum Beenden des Splash-Screens, wenn Chromium startet
+cat <<EOF | sudo tee /usr/local/bin/stop_splash.sh
+#!/bin/bash
+sleep 5  # Warte 5 Sekunden, damit Chromium sicher gestartet ist
+sudo systemctl stop splashscreen.service
+EOF
+sudo chmod +x /usr/local/bin/stop_splash.sh
+
+# 15.1.6 Autostart für Splash-Screen-Stopp
+echo "/usr/local/bin/stop_splash.sh &" | sudo tee -a "$USER_HOME/.bash_profile"
 
 sync
 
 # 16. Docker installieren
+echo "Installiere Docker..."
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 
-sudo groupadd docker
-sudo usermod -aG docker \$USER
-newgrp docker
+# Entferne das temporäre Installationsskript
+rm -f get-docker.sh
 
-sudo chmod 666 /var/run/docker.sock
-
-sudo apt install -y docker-compose-plugin
-docker compose version
-
+# Stelle sicher, dass der Docker-Dienst läuft, bevor weitere Befehle ausgeführt werden
+echo "Starte Docker-Dienste..."
 sudo systemctl enable docker.service
 sudo systemctl enable containerd.service
-sudo systemctl enable docker
-sudo systemctl start docker
+sudo systemctl start docker.service
 
-# 17. Abschluss
-echo "Setup abgeschlossen. Bitte Raspberry Pi neu starten."
+# Warte, bis der Docker-Dienst vollständig gestartet ist
+echo "Warte auf Docker-Initialisierung..."
+until sudo systemctl is-active docker.service > /dev/null 2>&1; do
+    sleep 1
+done
+echo "Docker-Dienst ist aktiv."
+
+# Berechtigungen für die Docker-Socket-Datei setzen
+echo "Setze Berechtigungen für Docker-Socket..."
+sudo chmod 666 /var/run/docker.sock
+
+# Gruppe hinzufügen und Benutzer anpassen
+echo "Konfiguriere Docker-Gruppe und Benutzer..."
+sudo groupadd docker || true  # Ignoriere Fehler, falls die Gruppe schon existiert
+sudo usermod -aG docker $USER
+
+# Docker-Compose-Plugin installieren
+echo "Installiere Docker-Compose-Plugin..."
+sudo apt install -y docker-compose-plugin
+
+# Überprüfe die Installation
+echo "Überprüfe Docker-Versionen..."
+docker --version
+docker compose version
+
+# 16. Abschluss
+echo "Docker-Setup abgeschlossen. Bitte Raspberry Pi neu starten."
+sudo reboot
