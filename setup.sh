@@ -9,6 +9,39 @@ sudo apt update && sudo apt upgrade -y
 # 2. Notwendige Pakete installieren (xrandr für Rotation hinzugefügt)
 sudo apt install xserver-xorg xinit openbox chromium-browser unclutter --no-install-recommends x11-xserver-utils xdotool xterm hostapd dnsmasq fbi xrandr -y
 
+# **2.1 Boot-Konfiguration für Splash-Screen und Rotation**
+echo "Konfiguriere Boot-Optionen..."
+
+# 2.1.1 /boot/firmware/config.txt anpassen
+CONFIG_FILE="/boot/firmware/config.txt"
+if [ -f "$CONFIG_FILE" ]; then
+    # Sicherstellen, dass die Einträge nicht doppelt sind
+    grep -q "^disable_splash=1" "$CONFIG_FILE" || echo "disable_splash=1" | sudo tee -a "$CONFIG_FILE"
+    grep -q "^avoid_warnings=1" "$CONFIG_FILE" || echo "avoid_warnings=1" | sudo tee -a "$CONFIG_FILE"
+else
+    # Datei erstellen, falls sie nicht existiert
+    echo "Erstelle $CONFIG_FILE..."
+    cat <<EOF | sudo tee "$CONFIG_FILE"
+disable_splash=1
+avoid_warnings=1
+EOF
+fi
+sync
+
+# 2.1.2 /boot/firmware/cmdline.txt anpassen
+CMDLINE_FILE="/boot/firmware/cmdline.txt"
+if [ -f "$CMDLINE_FILE" ]; then
+    # Bestehende Datei überschreiben oder anpassen
+    echo "Aktualisiere $CMDLINE_FILE..."
+    sudo cp "$CMDLINE_FILE" "$CMDLINE_FILE.bak" # Backup erstellen
+    echo "console=tty3 quiet splash plymouth.ignore-serial-consoles loglevel=0 vt.global_cursor_default=0" | sudo tee "$CMDLINE_FILE"
+else
+    # Datei erstellen, falls sie nicht existiert
+    echo "Erstelle $CMDLINE_FILE..."
+    echo "console=tty3 quiet splash plymouth.ignore-serial-consoles loglevel=0 vt.global_cursor_default=0" | sudo tee "$CMDLINE_FILE"
+fi
+sync
+
 # 3. Erstelle notwendige Chromium-Verzeichnisse
 mkdir -p "$USER_HOME/.config/chromium"
 mkdir -p "$USER_HOME/.cache/chromium"
@@ -144,7 +177,7 @@ sync
 # **15.1. PNG-Splash-Screen einrichten (Rotation beim Splash-Screen starten)**
 echo "Richte Splash-Screen mit dauerhafter Rotation ein..."
 
-# 15.1.4 Service für den Splash-Screen anlegen (mit Rotation)
+# 15.1.1 Service für den Splash-Screen anlegen (mit Rotation)
 cat <<EOF | sudo tee /etc/systemd/system/splashscreen.service
 [Unit]
 Description=Custom Boot Splash Screen with Persistent Rotation
@@ -162,9 +195,6 @@ RemainAfterExit=yes
 WantedBy=sysinit.target
 EOF
 sudo systemctl enable splashscreen.service
-
-# 15.1.5 Skript zum Beenden des Splash-Screens entfernt, da jetzt in .xinitrc
-# Das vorherige stop_splash.sh wird nicht mehr benötigt
 
 sync
 
