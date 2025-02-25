@@ -34,7 +34,7 @@ sync
 cat <<EOF | tee "$USER_HOME/start_chromium.sh"
 #!/bin/bash
 export DISPLAY=:0
-chromium-browser --user-data-dir="$USER_HOME/.config/chromium-profile" --noerrdialogs --disable-infobars --kiosk http://localhost:3000/display --disable-features=RendererCodeIntegrity --disable-background-timer-throttling --disable-renderer-backgrounding || sudo reboot
+chromium-browser --user-data-dir="$USER_HOME/.config/chromium-profile" --noerrdialogs --disable-infobars --kiosk http://1.1.1.1:3000/display --disable-features=RendererCodeIntegrity --disable-background-timer-throttling --disable-renderer-backgrounding || sudo reboot
 EOF
 chmod +x "$USER_HOME/start_chromium.sh"
 sync
